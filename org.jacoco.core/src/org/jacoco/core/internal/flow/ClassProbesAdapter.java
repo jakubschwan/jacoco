@@ -53,8 +53,36 @@ public class ClassProbesAdapter extends ClassVisitor implements
 	public void visit(final int version, final int access, final String name,
 			final String signature, final String superName,
 			final String[] interfaces) {
+
+
+		StackTraceElement testName = getTestNameFromStackTrace(Thread.currentThread().getStackTrace());
+		if (testName!=null) {
+			System.out.println("VISIT");
+			System.out.println(testName.toString());
+			System.out.println();
+		}
+
 		this.name = name;
 		super.visit(version, access, name, signature, superName, interfaces);
+	}
+
+	private final String SUN_REFLECT_PREFIX = "sun.reflect";
+	private final String ORG_JUNIT_RUNNERS_PREFIX = "org.junit.runners";
+
+	private StackTraceElement getTestNameFromStackTrace(StackTraceElement[] ste) {
+		boolean containsSunReflect = false;
+		int sunReflectIndex = Integer.MAX_VALUE;
+
+		for (int i = 0; i < ste.length; i++) {
+			if(!containsSunReflect && ste[i].getClassName().startsWith(SUN_REFLECT_PREFIX)) {
+				containsSunReflect = true;
+				sunReflectIndex = i;
+			}
+			else if (containsSunReflect && ste[i].getClassName().startsWith(ORG_JUNIT_RUNNERS_PREFIX)) {
+				return ste[sunReflectIndex-1];
+			}
+		}
+		return null;
 	}
 
 	@Override
